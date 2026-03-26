@@ -1,4 +1,4 @@
-# NoteVault — Associate Cloud Engineer Technical Assessment
+# NoteVault
 
 **Stack:** Django REST Framework · React · PostgreSQL · Docker · AWS EC2 · S3 · Nginx
 
@@ -35,6 +35,8 @@ Internet (Users)
                        (via IAM least privilege)
 ```
 
+![Architecture](architecture-diagram.png)
+
 **Key Design Decisions:**
 - Nginx is the ONLY container exposed to the internet
 - PostgreSQL is NEVER exposed publicly — internal Docker network only
@@ -44,42 +46,6 @@ Internet (Users)
 
 ---
 
-## PROJECT STRUCTURE
-
-```
-notes-crud-aws/
-├── backend/
-│   ├── config/
-│   │   ├── settings.py        # Django settings (env-driven)
-│   │   ├── urls.py            # URL routing
-│   │   └── wsgi.py
-│   ├── notes/
-│   │   ├── models.py          # Note model
-│   │   ├── views.py           # CRUD ViewSet + S3 upload
-│   │   ├── serializers.py     # DRF serializer
-│   │   └── urls.py            # API routes
-│   ├── requirements.txt
-│   ├── Dockerfile             # Multi-stage build
-│   └── entrypoint.sh          # Wait for DB → migrate → start
-├── frontend/
-│   ├── src/
-│   │   ├── App.js             # Full CRUD UI
-│   │   ├── api.js             # Axios API client
-│   │   └── App.css            # Styling
-│   ├── Dockerfile             # Build React → serve via Nginx
-│   └── package.json
-├── nginx/
-│   ├── nginx.conf             # Production (HTTPS)
-│   └── nginx.dev.conf         # Development (HTTP only)
-├── docker-compose.yml         # Production
-├── docker-compose.dev.yml     # Development
-├── .env.example               # Template — copy to .env
-├── .env.dev                   # Safe dev defaults
-├── .gitignore                 # Prevents .env from being committed
-└── README.md
-```
-
----
 
 ## API ENDPOINTS
 
@@ -100,15 +66,15 @@ notes-crud-aws/
 
 ### STEP 1 — Create GitHub Repository
 
-**Why:** The assignment requires submitting a GitHub repo with all code.
+**Why:** Th assignment requires submitting a GitHub repo with all code.
 
 1. Go to https://github.com and sign in
 2. Click the green **"New"** button
-3. Repository name: `notes-crud-aws`
+3. Repository name: `notes-crud-app`
 4. Set to **Public**
 5. Do NOT add README or .gitignore (we already have them)
 6. Click **"Create repository"**
-7. Copy the repo URL — looks like: `https://github.com/YOUR_USERNAME/notes-crud-aws.git`
+7. Copy the repo URL — looks like: `https://github.com/YOUR_USERNAME/notes-crud-app.git`
 
 ---
 
@@ -232,26 +198,13 @@ notes-crud-aws/
 **Why:** We need to get inside the server to install Docker and deploy the app.
 
 1. Find your `notes-key.pem` file — it downloaded to your Downloads folder
-2. Open **PowerShell** (just normal, not admin)
-3. First fix the file permissions — paste this and replace YourName:
-
-```powershell
-icacls "C:\Users\YourName\Downloads\notes-key.pem" /inheritance:r /grant:r "%USERNAME%:R"
-```
-
-4. Now connect to EC2 — replace YOUR_EC2_IP with your actual IP:
-
-```powershell
-ssh -i "C:\Users\YourName\Downloads\notes-key.pem" ubuntu@YOUR_EC2_IP
-```
-
-5. It will ask:
+2. It will ask:
 ```
 Are you sure you want to continue connecting (yes/no)?
 ```
 Type `yes` and press Enter
 
-6. You are now inside EC2 when you see:
+3. You are now inside EC2 when you see:
 ```
 ubuntu@ip-xxx-xxx-xxx-xxx:~$
 ```
@@ -292,32 +245,7 @@ You should see: `Docker version 24.x.x` ✅
 
 ---
 
-### STEP 7 — Upload Project Files to EC2
-
-**Why:** We need to get our code onto the server.
-
-1. Open a **NEW PowerShell window** on your laptop (keep EC2 one open)
-2. Run this — replace YourName and YOUR_EC2_IP:
-
-```powershell
-scp -i "C:\Users\YourName\Downloads\notes-key.pem" "C:\Users\YourName\Desktop\notes-crud-aws-FINAL.zip" ubuntu@YOUR_EC2_IP:/home/ubuntu/
-```
-
-3. Go back to your EC2 PowerShell window and run:
-
-```bash
-cd /home/ubuntu
-unzip notes-crud-aws-FINAL.zip
-mv project notes-crud-aws
-cd notes-crud-aws
-ls
-```
-
-You should see all project files listed ✅
-
----
-
-### STEP 8 — Create the .env File on EC2
+### STEP 7 — Create the .env File on EC2
 
 **Why:** All secrets and configuration go in this file — never in the code.
 
@@ -333,25 +261,24 @@ DEBUG=False
 ALLOWED_HOSTS=YOUR_EC2_PUBLIC_IP
 
 POSTGRES_DB=notesdb
-POSTGRES_USER=notesuser
-POSTGRES_PASSWORD=StrongPassword123!
+POSTGRES_USER=xxxxxxx
+POSTGRES_PASSWORD=xxxxxx
 POSTGRES_HOST=db
 POSTGRES_PORT=5432
 
 USE_S3=True
-AWS_ACCESS_KEY_ID=paste_your_access_key_id_here
-AWS_SECRET_ACCESS_KEY=paste_your_secret_access_key_here
+AWS_ACCESS_KEY_ID=xxxxxxx
+AWS_SECRET_ACCESS_KEY=xxxxxxxxx
 AWS_STORAGE_BUCKET_NAME=notes-app-files-yourname
 AWS_S3_REGION_NAME=us-east-1
 
 CORS_ALLOWED_ORIGINS=http://YOUR_EC2_PUBLIC_IP
 ```
 
-Save the file: press **Ctrl+X** → then **Y** → then **Enter**
 
 ---
 
-### STEP 9 — Start the Application
+### STEP 8 — Start the Application
 
 **Why:** Docker Compose starts all 4 containers together in the right order.
 
@@ -383,7 +310,7 @@ docker compose -f docker-compose.dev.yml logs backend
 
 ---
 
-### STEP 10 — Verify the App is Working
+### STEP 9 — Verify the App is Working
 
 **Why:** Confirm everything is connected and working before recording.
 
@@ -406,38 +333,16 @@ Test creating a note — click "New Note" in the app, fill in title and descript
 
 ---
 
-### STEP 11 — Set Up SSL Certificate
+### STEP 10 — Set Up SSL Certificate
 
 **Why:** The assignment requires SSL setup. We use a self-signed certificate since we have no domain.
 
-Run these commands on EC2:
-
-```bash
-sudo mkdir -p /etc/ssl/notes
-```
-
-```bash
-sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-  -keyout /etc/ssl/notes/selfsigned.key \
-  -out /etc/ssl/notes/selfsigned.crt \
-  -subj "/C=US/ST=State/L=City/O=NoteVault/CN=YOUR_EC2_IP"
 ```
 
 Update nginx config to use it:
 
 ```bash
 nano nginx/nginx.conf
-```
-
-Replace the two ssl_certificate lines with:
-```
-ssl_certificate     /etc/ssl/notes/selfsigned.crt;
-ssl_certificate_key /etc/ssl/notes/selfsigned.key;
-```
-
-Also replace `server_name _;` line with your EC2 IP:
-```
-server_name YOUR_EC2_IP;
 ```
 
 Restart nginx:
@@ -454,7 +359,7 @@ Browser will show a warning (because self-signed) — click "Advanced" → "Proc
 
 ---
 
-### STEP 12 — Push Code to GitHub
+### STEP 11 — Push Code to GitHub
 
 **Why:** Assignment requires a GitHub repository with all code.
 
@@ -481,7 +386,7 @@ When asked for password — use a GitHub Personal Access Token:
 
 ---
 
-### STEP 13 — Verify GitHub Repository
+### STEP 12 — Verify GitHub Repository
 
 **Why:** Confirm all files are visible on GitHub before recording.
 
@@ -497,41 +402,6 @@ When asked for password — use a GitHub Personal Access Token:
    - `.gitignore` ✅
 3. Confirm `.env` is NOT there (it is secret — gitignore excludes it) ✅
 
----
-
-### STEP 14 — Record Your Screen (15-20 minutes)
-
-**Why:** Assignment requires a screen recording demonstrating everything working.
-
-**How to record on Windows 11:**
-Press **Win + Alt + R** to start recording. Press again to stop.
-Files save to: `C:\Users\YourName\Videos\Captures\`
-
-**What to show — in this exact order:**
-
-| Time | What to show | Why |
-|------|-------------|-----|
-| 0:00–1:00 | Introduce yourself. Say: "I built NoteVault — a CRUD app with Django, React, PostgreSQL, deployed on AWS EC2 with Docker." | Introduction |
-| 1:00–2:00 | Open GitHub repo — show all folders and files | Proves code is submitted |
-| 2:00–3:00 | Open `http://YOUR_EC2_IP` in browser — show the app loads | Proves deployment works |
-| 3:00–4:00 | CREATE a note — type title + description + attach a file | Proves Create works |
-| 4:00–5:00 | Show the note appears in the list | Proves Read works |
-| 5:00–6:00 | Click Edit — change the title — save it | Proves Update works |
-| 6:00–7:00 | Click Delete on a note — confirm it disappears | Proves Delete works |
-| 7:00–8:00 | Open `http://YOUR_EC2_IP/api/notes/` — show JSON response | Proves API routing works |
-| 8:00–9:00 | Use the S3 upload panel on the app — upload a file | Proves S3 upload works |
-| 9:00–10:00 | Go to AWS Console → S3 → open your bucket → show the uploaded file | Proves file is in S3 |
-| 10:00–11:00 | AWS Console → EC2 → show your running instance | Proves EC2 deployment |
-| 11:00–12:00 | Click Security Group → show port rules — 80/443 open, 5432 blocked | Proves security config |
-| 12:00–13:00 | SSH into EC2 in terminal → run `docker compose -f docker-compose.dev.yml ps` → show all containers Up | Proves Docker setup |
-| 13:00–14:00 | Show `cat nginx/nginx.dev.conf` — explain it routes /api to backend and /* to frontend | Proves Nginx reverse proxy |
-| 14:00–15:00 | Show `.env.example` file — say "actual .env is not committed to git — secrets are safe" | Proves environment variable management |
-| 15:00–16:00 | Open `docs/architecture-diagram.html` in browser — explain the diagram | Proves architecture understanding |
-| 16:00–17:00 | Say: "For scaling I would use ECS Fargate for containers, RDS for database, ALB for load balancing, CloudFront for CDN" | Proves scaling knowledge |
-| 17:00–18:00 | Say: "Backups via daily pg_dump to S3, S3 versioning enabled, EC2 AMI snapshots via AWS Backup" | Proves backup knowledge |
-| 18:00 | Close: "All assignment requirements are met — thank you for reviewing." | Clean finish |
-
-> ⚠️ IMPORTANT: When showing the .env file — do NOT show actual secret key values on screen
 
 ---
 
@@ -671,39 +541,3 @@ Entire server can be restored from any snapshot in minutes.
 
 ---
 
-## CORS CONFIGURATION
-
-CORS (Cross-Origin Resource Sharing) controls which frontend URLs can call the API.
-
-In `config/settings.py`:
-```python
-CORS_ALLOWED_ORIGINS = os.environ.get(
-    "CORS_ALLOWED_ORIGINS",
-    "http://localhost:3000 http://localhost"
-).split()
-```
-
-- Development: allows `http://localhost:3000`
-- Production: set `CORS_ALLOWED_ORIGINS=https://yourdomain.com` in `.env`
-- Wildcard `*` is NEVER used — only specific origins are allowed
-
----
-
-## SECURITY CHECKLIST
-
-```
-[✅] No hardcoded secrets anywhere in code
-[✅] .env file excluded from git via .gitignore
-[✅] PostgreSQL not exposed publicly — internal network only
-[✅] Django not directly accessible — behind Nginx only
-[✅] IAM least privilege — S3 one bucket only
-[✅] Security Group — only ports 80, 443, 22 open
-[✅] CORS configured for specific origins only — no wildcard
-[✅] Security headers set in Nginx config
-[✅] DEBUG=False in production
-[✅] HTTPS configured (HTTP redirects to HTTPS)
-[✅] Rate limiting on API via Nginx
-[✅] Multi-stage Docker build — smaller image, smaller attack surface
-[✅] Separate dev and production configuration
-[✅] Strong database password via environment variable
-```
