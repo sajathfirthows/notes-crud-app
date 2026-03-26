@@ -1,0 +1,30 @@
+# Secrets — NEVER commit
+.env
+.env.prod
+*.pem
+*.key
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+*.egg-info/
+
+# Django
+staticfiles/
+media/
+db.sqlite3
+
+# Node
+node_modules/
+build/
+.npm
+
+# Docker
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
