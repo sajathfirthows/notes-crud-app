@@ -322,6 +322,8 @@ http://YOUR_EC2_IP
 
 You should see the NoteVault app ✅
 
+![CRUDAPP](App.png)
+
 Test the API:
 ```
 http://YOUR_EC2_IP/api/notes/
@@ -388,9 +390,7 @@ When asked for password — use a GitHub Personal Access Token:
 
 ### STEP 12 — Verify GitHub Repository
 
-**Why:** Confirm all files are visible on GitHub before recording.
-
-1. Go to `https://github.com/YOUR_USERNAME/notes-crud-aws`
+1. Go to `https://github.com/sajathfirthows/notes-crud-aws`
 2. Check these folders and files are all there:
    - `backend/` folder ✅
    - `frontend/` folder ✅
